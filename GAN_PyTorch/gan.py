@@ -1,4 +1,3 @@
-import argparse
 import os
 import numpy as np
 import math
@@ -7,20 +6,21 @@ import torchvision.transforms as transforms
 from torchvision.utils import save_image
 
 from torch.utils.data import DataLoader
+
 from torchvision import datasets
 from torch.autograd import Variable
 
 import torch.nn as nn
-import torch.nn.functional as F
 import torch
 from GAN import options
-
+from GAN import RootDataSet
 os.makedirs("images", exist_ok=True)
 
 opt = options.options().opt
 print(opt)
 
-img_shape = (opt.channels, opt.img_size, opt.img_size)
+#img_shape = (opt.channels, opt.img_size, opt.img_size)
+Dataset = RootDataSet.RootDataSet("../files/PhaseSpaceSimulation.root")
 
 
 class Generator(nn.Module):
@@ -35,13 +35,13 @@ class Generator(nn.Module):
             nn.Linear(128, 64),
             nn.BatchNorm1d(64, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(64, int(np.prod(img_shape))),
+            nn.Linear(64, Dataset.leaves),
             nn.Tanh()
         )
 
     def forward(self, z):
         img = self.model(z)
-        img = img.view(img.size(0), *img_shape)
+        #img = img.view(img.size(0), *(1,9))
         return img
 
 
@@ -50,7 +50,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.model = nn.Sequential(
-            nn.Linear(int(np.prod(img_shape)), 256),
+            nn.Linear(Dataset.leaves, 256),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(256, 64),
             nn.LeakyReLU(0.2, inplace=True),
@@ -64,7 +64,6 @@ class Discriminator(nn.Module):
 
         return validity
 
-
 # Loss function
 adversarial_loss = torch.nn.BCELoss()
 
@@ -72,16 +71,10 @@ generator = Generator()
 discriminator = Discriminator()
 
 # Configure data loader
-os.makedirs("../../data/mnist", exist_ok=True)
+# os.makedirs("../../data/mnist", exist_ok=True)
+
 dataloader = torch.utils.data.DataLoader(
-    datasets.MNIST(
-        "../../data/mnist",
-        train=True,
-        download=True,
-        transform=transforms.Compose(
-            [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
-        ),
-    ),
+    Dataset,
     batch_size=opt.batch_size,
     shuffle=True,
 )
@@ -97,15 +90,17 @@ Tensor = torch.FloatTensor
 # ----------
 
 for epoch in range(opt.n_epochs):
-    for i, (imgs, _) in enumerate(dataloader):
+    for i,imgs in enumerate(dataloader):
+        #print(imgs)
+        #print(q)
 
         # Adversarial ground truths
         valid = Variable(Tensor(imgs.size(0), 1).fill_(1.0), requires_grad=False)
         fake = Variable(Tensor(imgs.size(0), 1).fill_(0.0), requires_grad=False)
-
+        #print(valid)
         # Configure input
         real_imgs = Variable(imgs.type(Tensor))
-
+        #print(real_imgs)
         # -----------------
         #  Train Generator
         # -----------------
@@ -114,10 +109,11 @@ for epoch in range(opt.n_epochs):
 
         # Sample noise as generator input
         z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim))))
-
+        #print(z)
+        #print(imgs.shape[0])
         # Generate a batch of images
         gen_imgs = generator(z)
-
+        #print(gen_imgs)
         # Loss measures generator's ability to fool the discriminator
         g_loss = adversarial_loss(discriminator(gen_imgs), valid)
 
@@ -146,5 +142,6 @@ for epoch in range(opt.n_epochs):
         batches_done = epoch * len(dataloader) + i
         if batches_done % opt.sample_interval == 0:
             save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
+
 
 
