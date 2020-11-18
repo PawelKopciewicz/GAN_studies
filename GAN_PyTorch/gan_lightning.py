@@ -22,9 +22,6 @@ os.makedirs("images", exist_ok=True)
 opt = options.options().opt
 print(opt)
 
-
-
-#img_shape = (opt.channels, opt.img_size, opt.img_size)
 Dataset = RootDataSet.RootDataSet("../files/PhaseSpaceSimulation.root")
 
 class GAN(pl.LightningModule):
@@ -87,11 +84,6 @@ class GAN(pl.LightningModule):
 
         d_loss.backward()
         opt_disc.step()
-
-
-adversarial_loss = torch.nn.BCELoss()
-
-GenAdvNet = GAN()
 
 dataloader = torch.utils.data.DataLoader(
     Dataset,
