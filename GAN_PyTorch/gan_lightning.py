@@ -12,8 +12,8 @@ from torch.autograd import Variable
 
 import torch.nn as nn
 import torch
-from GAN import options
-from GAN import RootDataSet
+from GAN_PyTorch import options
+from GAN_PyTorch import RootDataSet
 
 import pytorch_lightning as pl
 
