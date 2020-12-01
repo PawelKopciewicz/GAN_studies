@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 import uproot
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 class RootDataSet(Dataset):
     def __init__(self, filename):
@@ -11,11 +12,18 @@ class RootDataSet(Dataset):
         NumEntries = events.numentries  # number of data objects (vectors)
         params = ["H1_PX", "H1_PY", "H1_PZ", "H2_PX", "H2_PY", "H2_PZ", "H3_PX", "H3_PY", "H3_PZ"]
 
-        data = events.lazyarrays(params)
+        self.data = events.lazyarrays(params)
         #data["H1_PZ"] = data["H1_PZ"]/4
         #data["H2_PZ"] = data["H2_PZ"] / 4
         #data["H3_PZ"] = data["H3_PZ"] / 4
-        self.data_arr = np.vstack(list(data[elem] for elem in params)).T
+        self.data_arr = np.vstack(list(self.data[elem] for elem in params)).T
+        self.data_t = self.data_arr
+        self.scaler = MinMaxScaler(feature_range=(-1, 1))
+        self.scaler = self.scaler.fit(self.data_arr)
+
+
+        self.data_arr = self.scaler.transform(self.data_arr)
+
         self.leaves = len(params);
         # Splitting the text data and lables from each other
         #X, y = [], []
@@ -34,3 +42,4 @@ class RootDataSet(Dataset):
 
     def __getitem__(self, index):
         return self.data_arr[index][:]
+
