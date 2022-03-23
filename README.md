@@ -1,1 +1,3 @@
 This project explores the standard GAN (2014) capabilities for generating MC data of the tree body B -> KKK decay. The training data were adopted from the LHCb open-access storage and come from the LHCb simulation software. The evaluation method of result quality was chosen to be the reconstructed mass of the B meson from the 9 combined variables of momentum of each selective daughter particle. Other than reconstructed mass, the distribution of one selected momentum, total energy and discriminator accuraccy thorough the training show the overall GAN performance in this specific research task.
+
+Project supported by National Science Centre (Poland), UMO-2020/37/N/ST2/04008
